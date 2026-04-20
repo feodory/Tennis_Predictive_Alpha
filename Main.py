@@ -1,14 +1,10 @@
 import pandas as pd
-from model import TennisModel  # <--- This "grabs" your class from model.py
+from model import TennisModel
 
-# 1. Load the data
-df = pd.read_csv('atp_matches_2024.csv')
+# The remote URL to the 2024 (or 2025/2026) data
+DATA_URL = 'https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_2024.csv'
 
-# 2. Initialize the model
+# Load the data directly from the web
+df = pd.read_csv(DATA_URL)
+
 model = TennisModel(df)
-
-# 3. Test Stuff (The "Driving")
-scores = model.predict_odds("Fils", "Musetti", "Clay", 1440, 3625, 0)
-results = model.check_alpha(scores[0], scores[1], 1.91)
-
-print(f"Verdict: {results[3]}")
