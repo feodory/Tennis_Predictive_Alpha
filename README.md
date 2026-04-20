@@ -38,8 +38,8 @@ scores = model.predict_odds("Sinner", "Alcaraz", "Hard", 13000, 9000, opinion=0)
 # Check for Alpha (Market Multiplier of 1.8x)
 my_prob, m_prob, ev, verdict = model.check_alpha(scores[0], scores[1], 1.8)
 
-print(f"Verdict: {verdict} | Expected ROI: {ev*100}%")
-'''
+print(f"Verdict: {verdict} | Expected ROI: {ev*100}%") ```
+
 ## 🌐 Data Sourcing
 To ensure the model utilizes the most recent match data without local storage overhead, this project pulls historical records directly from remote repositories.
 * **Source:** [Jeff Sackmann's ATP Database](https://github.com/JeffSackmann/tennis_atp)
