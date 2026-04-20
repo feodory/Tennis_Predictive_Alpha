@@ -1,3 +1,5 @@
+import pandas as pd
+
 class TennisModel:
     def __init__(self, dataframe):
         """Initializes the model with a historical ATP match dataset."""
