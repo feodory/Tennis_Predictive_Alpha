@@ -29,7 +29,7 @@ from model import TennisModel
 import pandas as pd
 
 # Initialize with historical data
-df = pd.read_csv('atp_matches_2024.csv')
+df = pd.read_csv('https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_2024.csv')
 model = TennisModel(df)
 
 # Predict Match
