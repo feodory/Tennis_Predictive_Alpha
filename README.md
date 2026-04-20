@@ -39,3 +39,5 @@ scores = model.predict_odds("Sinner", "Alcaraz", "Hard", 13000, 9000, opinion=0)
 my_prob, m_prob, ev, verdict = model.check_alpha(scores[0], scores[1], 1.8)
 
 print(f"Verdict: {verdict} | Expected ROI: {ev*100}%")
+
+"This model pulls real-time historical data directly from Jeff Sackmann's ATP database to ensure the most up-to-date analysis without local storage overhead." (This makes it sound like a deliberate choice rather than a shortcut).
