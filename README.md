@@ -14,7 +14,7 @@ A machine learning pipeline for predicting ATP tennis match outcomes using histo
 
 Validated using a strict **walk-forward backtest**: each prediction only uses data from matches that occurred before that match's date — no lookahead bias.
 
-![Model Calibration](Images.png)
+![Model Calibration](calibration_plot.png)
 
 ## Methodology
 
