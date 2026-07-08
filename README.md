@@ -1,46 +1,112 @@
-# Tennis Quant: ATP Alpha Discovery Model
+# Tennis Match Prediction Model
 
-A quantitative trading tool designed to identify mispriced binary contracts in tennis markets (e.g., Kalshi) by leveraging historical ATP data and multi-factor statistical modeling.
+A machine learning pipeline for predicting ATP tennis match outcomes using historical match data, self-computed Elo ratings, and logistic regression.
 
-## 🚀 Overview
-This project implements a `TennisModel` class that calculates the "True Probability" of match outcomes. By comparing model-derived probabilities against market prices (multipliers), the system identifies trades with positive **Expected Value (EV)**.
+## Results
 
-## 📊 Methodology
-The model calculates win probabilities by synthesizing four primary data streams:
+| Metric | Value |
+|---|---|
+| Out-of-sample accuracy | **62.2%** |
+| 95% Confidence Interval | 58.6% – 65.8% |
+| Log-loss | 0.635 |
+| Test set | 693 matches (2023–2026) |
+| Baseline (random) | 50% |
 
-1.  **Elo-Based Strength:** Relative player strength derived from ATP ranking points.
-2.  **Surface-Specific H2H:** Historical head-to-head performance with a **recency decay function** (newer matches carry more weight).
-3.  **Common Opponent Network:** Analyzes performance against shared rivals to solve for "A vs C" scenarios.
-4.  **Surface Variance:** Adjusts win rates based on historical performance on Clay, Grass, or Hard courts.
+Validated using a strict **walk-forward backtest**: each prediction only uses data from matches that occurred before that match's date — no lookahead bias.
 
-## 📉 Mathematical Framework
-The core of the "Alpha" discovery is the Expected Value formula:
+## Methodology
 
-$$EV = (P_{win} \times \text{Net Profit}) - (P_{loss} \times \text{Stake})$$
+### Features
 
-Where:
-* $P_{win}$ is the model's predicted probability.
-* **Net Profit** is $(Multiplier - 1)$.
-* **Stake** is the amount risked ($1.00$).
+Four features are computed for each match, all using only pre-match historical data:
 
-## 🛠️ Usage
-```python
-from model import TennisModel
-import pandas as pd
+| Feature | Description |
+|---|---|
+| `elo_diff` | Difference in self-computed Elo ratings |
+| `swr_diff` | Difference in surface-specific win rates |
+| `p1_h2h` | Player 1's historical H2H win rate vs Player 2 |
+| `p1_co` | Player 1's win rate vs common opponents, relative to Player 2 |
 
-# Initialize with historical data
-df = pd.read_csv('https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_2024.csv')
-model = TennisModel(df)
+### Elo Ratings
 
-# Predict Match
-scores = model.predict_odds("Sinner", "Alcaraz", "Hard", 13000, 9000, opinion=0)
+Elo ratings are computed from scratch using the full match history (2000–present). Each match updates both players' ratings using the standard logistic update formula:
 
-# Check for Alpha (Market Multiplier of 1.8x)
-my_prob, m_prob, ev, verdict = model.check_alpha(scores[0], scores[1], 1.8)
-
-print(f"Verdict: {verdict} | Expected ROI: {ev*100}%")
 ```
-## 🌐 Data Sourcing
-To ensure the model utilizes the most recent match data without local storage overhead, this project pulls historical records directly from remote repositories.
-* **Source:** [Jeff Sackmann's ATP Database](https://github.com/JeffSackmann/tennis_atp)
-* **Implementation:** Data is streamed via `pandas.read_csv()` from raw GitHub URLs, allowing for seamless updates as new 2026 match results are processed.
+expected = 1 / (1 + 10^((opponent_rating - player_rating) / 400))
+new_rating = old_rating + K * (actual_result - expected)
+```
+
+K-factor is set to 32 (standard). Ratings start at 1500 for all players.
+
+### Model
+
+Logistic regression is trained on pre-2023 matches. Feature correlation with match outcome:
+
+| Feature | Correlation |
+|---|---|
+| elo_diff | 0.402 |
+| p1_co | 0.257 |
+| swr_diff | 0.262 |
+| p1_h2h | 0.198 |
+
+Learned weights confirm Elo is the strongest predictor (coefficient 0.878), consistent with published tennis prediction research.
+
+## Project Structure
+
+```
+├── model.py        # TennisModel class with Elo computation and feature methods
+├── train.py        # Feature table builder and logistic regression training
+├── backtest.py     # Walk-forward backtest
+├── requirements.txt
+└── README.md
+```
+
+## Setup
+
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+**Train the model** (builds feature table, fits logistic regression, saves model files):
+```bash
+python train.py
+```
+
+**Run backtest** (requires trained model from train.py):
+```bash
+python backtest.py
+```
+
+**Predict a specific matchup:**
+```python
+import pickle
+import pandas as pd
+from model import TennisModel
+
+# load data and trained model
+df = pd.read_csv('your_atp_data.csv')
+with open('lr_model.pkl', 'rb') as f:
+    lr_model = pickle.load(f)
+with open('lr_scaler.pkl', 'rb') as f:
+    lr_scaler = pickle.load(f)
+
+model = TennisModel(df)
+probs = model.predict("Sinner J.", "Alcaraz C.", "Clay", lr_model, lr_scaler)
+print(f"Sinner win probability: {probs[0]:.1%}")
+print(f"Alcaraz win probability: {probs[1]:.1%}")
+```
+
+## Data
+
+Uses the [ATP Tennis Dataset](https://www.kaggle.com/datasets/dissfya/atp-tennis-2000-2023daily-pull) via kagglehub (68,000+ matches, 2000–2026).
+
+## Requirements
+
+```
+pandas
+numpy
+scikit-learn
+kagglehub
+```
